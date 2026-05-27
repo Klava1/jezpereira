@@ -8,113 +8,181 @@ type Props = {
 };
 
 /**
- * Tuning constants for the scroll-coupled marquee.
+ * Marquee physics.
  *
- * Mental model: page scrolls (and arrow-button clicks) feed VELOCITY into
- * the marquee. Velocity decays each frame (FRICTION) so a single input
- * doesn't push forever. Velocity is integrated into BOOST — an additive
- * horizontal offset applied to the wrapper, on top of the CSS autoplay
- * animation. Boost also decays slowly (BOOST_RETURN) so when input
- * stops, the marquee glides back to its CSS-animated position rather
- * than drifting permanently out of phase.
+ * Three independent motion sources compose on top of the CSS autoplay
+ * (which translates the inner track from 0 → -50% and back, infinitely,
+ * giving a seamless infinite loop thanks to the duplicated photo list):
  *
- * SCROLL_MULTIPLIER controls how aggressively scrolling translates into
- * marquee motion. 2.5 means scrolling 100px adds 250px of velocity
- * (which then decays — total marquee travel from one scroll burst is
- * less than that).
+ *   1. CSS keyframe autoplay  — always running, owns the base drift.
+ *   2. Trackpad horizontal swipe → fed into `velocity`, integrated into
+ *      `boost`, decays via FRICTION. Feels like "scrolling the strip".
+ *   3. Arrow buttons          → set `targetBoost`. Each frame the engine
+ *      tweens `boost` toward `targetBoost` (exponential ease). Feels
+ *      like "next / previous picture".
  *
- * ARROW_KICK is the velocity injected by one click of the left/right
- * arrow buttons — sized to move the marquee by roughly one photo width
- * (~400px) before friction settles things.
+ * Inputs are mutually exclusive: starting a tween cancels in-flight
+ * velocity, and a wheel event cancels an in-flight tween. This avoids
+ * the "two motions fighting each other" feeling.
+ *
+ * `boost` is persistent (no decay to zero). Wherever the user leaves the
+ * carousel, it stays there and autoplay continues drifting from that
+ * point. The duplicated track makes arbitrary `boost` values wrap
+ * seamlessly so there's no end-of-strip glitch.
  */
-const SCROLL_MULTIPLIER = 0.7;
-const FRICTION = 0.86;       // velocity decay per frame (~5 frames to half)
-const BOOST_RETURN = 0.94;   // boost decay per frame (~11 frames to half ≈ 180ms)
-const ARROW_KICK = 650;      // velocity (px/frame) added per arrow click
+const FRICTION = 0.86;        // velocity decay per frame (~5 frames to half)
+const WHEEL_MULTIPLIER = 1.5; // wheel deltaX → px/frame of velocity
+const TWEEN_EASE = 0.18;      // higher = arrow snap is faster; 0.18 ≈ 250ms to settle
+const FALLBACK_STEP = 400;    // arrow step (px) if photo widths not measured yet
+const GAP_PX = 16;            // matches Tailwind `gap-4` on the track
 
 export function GalleryMarqueeClient({ images, animationDuration }: Props) {
+  // Outer section — the `wheel` listener attaches here so gestures only
+  // count when the pointer is over the carousel.
+  const sectionRef = useRef<HTMLElement>(null);
   // Wrapper div — its `translateX` is JS-driven and composes with the
   // inner track's CSS keyframe animation.
   const boostRef = useRef<HTMLDivElement>(null);
+  // Track div — used to measure rendered photo widths.
+  const trackRef = useRef<HTMLDivElement>(null);
 
-  // Marquee physics state lives in a ref so both the scroll listener
-  // (set up once in useEffect) and the arrow click handlers can mutate
-  // the same velocity field. Without this, click handlers would only
-  // see the initial closed-over values.
-  const stateRef = useRef({ velocity: 0, boost: 0 });
+  // Physics state lives in a ref so the wheel listener (set up once
+  // inside useEffect) and the arrow click handlers can mutate the same
+  // velocity field. Without this, click handlers would only see the
+  // initial closed-over values.
+  const stateRef = useRef({
+    velocity: 0,
+    boost: 0,
+    targetBoost: null as number | null,
+  });
+
+  // Step size used by the arrow controls. Filled in from the rendered
+  // width of the first photo + the gap, once images are loaded.
+  const stepRef = useRef<number>(FALLBACK_STEP);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    // ------------------------------------------------------------------
+    // Measure the first photo's rendered width so arrow clicks advance
+    // by ~one photo. Updates on window resize.
+    // ------------------------------------------------------------------
+    const measureStep = () => {
+      const firstImg = trackRef.current?.querySelector('img');
+      if (firstImg && firstImg.offsetWidth > 0) {
+        stepRef.current = firstImg.offsetWidth + GAP_PX;
+      }
+    };
+    const trackImgs = trackRef.current
+      ? Array.from(trackRef.current.querySelectorAll('img'))
+      : [];
+    // Re-measure as soon as the first image lays out
+    if (trackImgs[0]) {
+      if (trackImgs[0].complete) measureStep();
+      else trackImgs[0].addEventListener('load', measureStep, { once: true });
+    }
+    window.addEventListener('resize', measureStep);
+
+    // ------------------------------------------------------------------
+    // Wheel listener — captures horizontal trackpad gestures only.
+    // Vertical wheel events pass through to normal page scroll so the
+    // user can still scroll the page when their pointer is on the
+    // carousel.
+    // ------------------------------------------------------------------
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+        const s = stateRef.current;
+        s.targetBoost = null; // cancel any active arrow tween
+        // deltaX positive = swipe right-to-left = marquee should move left
+        // = translateX more negative.
+        s.velocity -= e.deltaX * WHEEL_MULTIPLIER;
+      }
+    };
+    section.addEventListener('wheel', onWheel, { passive: false });
+
+    // ------------------------------------------------------------------
+    // Animation loop — runs every frame, integrates whichever motion
+    // source is active (tween wins over velocity if both are set, but
+    // they're cancelled against each other on input, so in practice
+    // only one is active at a time).
+    // ------------------------------------------------------------------
     let rafId = 0;
     let lastFrameTime = performance.now();
 
-    const onScroll = () => {
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY;
-      lastScrollY = currentY;
-      // Scrolling DOWN (positive delta) should push the marquee LEFT
-      // (negative translateX), so we subtract.
-      stateRef.current.velocity -= delta * SCROLL_MULTIPLIER;
-    };
-
     const tick = (now: number) => {
-      // Normalize against 60fps so the friction constants behave the same
-      // on a 120Hz display or a throttled background tab.
       const frameRatio = Math.min(3, (now - lastFrameTime) / (1000 / 60));
       lastFrameTime = now;
 
       const s = stateRef.current;
-      // Integrate velocity into boost, then apply both decay terms.
-      s.boost += s.velocity * frameRatio;
-      s.velocity *= Math.pow(FRICTION, frameRatio);
-      s.boost *= Math.pow(BOOST_RETURN, frameRatio);
+      let changed = false;
 
-      // Skip DOM writes when nothing's effectively moving — saves wakeups
-      // when the user has been idle on the page.
-      if (boostRef.current && (Math.abs(s.boost) > 0.05 || Math.abs(s.velocity) > 0.05)) {
+      if (s.targetBoost !== null) {
+        // Arrow tween: exponential ease toward target.
+        const diff = s.targetBoost - s.boost;
+        if (Math.abs(diff) < 0.5) {
+          s.boost = s.targetBoost;
+          s.targetBoost = null;
+        } else {
+          s.boost += diff * TWEEN_EASE * frameRatio;
+        }
+        changed = true;
+      } else if (Math.abs(s.velocity) > 0.05) {
+        // Velocity glide from wheel input.
+        s.boost += s.velocity * frameRatio;
+        s.velocity *= Math.pow(FRICTION, frameRatio);
+        changed = true;
+      }
+
+      if (changed && boostRef.current) {
         boostRef.current.style.transform = `translate3d(${s.boost.toFixed(2)}px, 0, 0)`;
-      } else if (boostRef.current && boostRef.current.style.transform) {
-        boostRef.current.style.transform = '';
       }
 
       rafId = requestAnimationFrame(tick);
     };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
     rafId = requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      section.removeEventListener('wheel', onWheel);
+      window.removeEventListener('resize', measureStep);
       cancelAnimationFrame(rafId);
     };
   }, []);
 
-  // Arrow handlers — push velocity in the chosen direction and let the
-  // existing friction/decay loop above smoothly animate the motion and
-  // settle back into autoplay.
+  // Arrow handlers — set `targetBoost` so the tween in the tick loop
+  // glides the carousel by one photo width.
   const nudgeForward = useCallback(() => {
-    stateRef.current.velocity -= ARROW_KICK; // forward = leftward = autoplay direction
+    const s = stateRef.current;
+    const startFrom = s.targetBoost ?? s.boost;
+    s.velocity = 0;
+    s.targetBoost = startFrom - stepRef.current; // forward = leftward
   }, []);
   const nudgeBackward = useCallback(() => {
-    stateRef.current.velocity += ARROW_KICK; // backward = rightward = against autoplay
+    const s = stateRef.current;
+    const startFrom = s.targetBoost ?? s.boost;
+    s.velocity = 0;
+    s.targetBoost = startFrom + stepRef.current; // backward = rightward
   }, []);
 
   return (
-    // Outer wrapper is the positioning context for the arrow buttons so
-    // they can sit OUTSIDE the masked region (masks affect descendants
-    // and would fade the arrows at the viewport edges otherwise).
+    // Outer wrapper = positioning context for the arrow buttons so they
+    // can sit OUTSIDE the masked region (the section's mask fades
+    // descendants at the viewport edges).
     <div className="relative">
       <section
+        ref={sectionRef}
         aria-label="Photo gallery"
         className="gallery-marquee relative w-full overflow-hidden py-20"
       >
-        {/* Boost wrapper — its transform is JS-driven by the scroll listener
+        {/* Boost wrapper — its transform is JS-driven by the wheel listener
             and the arrow buttons. Acts purely as a translate container;
             its inner child runs the CSS keyframe autoplay independently. */}
         <div ref={boostRef} className="gallery-marquee-boost will-change-transform">
           {/* Track — flex row with both copies of the photo list. CSS keyframe
               translates it 0 → -50% for the seamless autoplay loop. */}
           <div
+            ref={trackRef}
             className="gallery-marquee-track flex w-max gap-4"
             style={{ animationDuration }}
           >
@@ -147,13 +215,12 @@ export function GalleryMarqueeClient({ images, animationDuration }: Props) {
         </div>
       </section>
 
-      {/* Arrow controls — sit on top of the masked area so they stay
-          fully opaque (the section's edge-fade mask doesn't reach them
-          because they're siblings, not descendants). */}
+      {/* Arrow controls — siblings of the masked section so the edge-fade
+          doesn't reach them. */}
       <button
         type="button"
         onClick={nudgeBackward}
-        aria-label="Scroll gallery backward"
+        aria-label="Previous photo"
         className="group absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-10
           w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
           bg-[rgba(10,10,11,0.7)] backdrop-blur-md border border-line-strong
@@ -166,7 +233,7 @@ export function GalleryMarqueeClient({ images, animationDuration }: Props) {
       <button
         type="button"
         onClick={nudgeForward}
-        aria-label="Scroll gallery forward"
+        aria-label="Next photo"
         className="group absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-10
           w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
           bg-[rgba(10,10,11,0.7)] backdrop-blur-md border border-line-strong

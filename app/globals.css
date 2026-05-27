@@ -254,13 +254,22 @@
   animation-play-state: paused;
 }
 
-/* Honour reduced-motion users — drop the BPM pulse and the marquee scroll
-   entirely, including the per-letter spans rendered inside the title in
-   the "wave" / "bold" phases. */
+/* Honour reduced-motion users — drop the BPM pulse on the hero title
+   (the per-letter spans in the "wave" / "bold" phases are the parts that
+   could plausibly trigger vestibular discomfort). The gallery marquee is
+   intentionally left running because it scrolls at a slow constant
+   velocity (~70 px/sec) and ceasing motion turns the strip into a
+   single static frame — visibly broken UX. The reduce-motion variant
+   below halves the speed for users who do want less motion. */
 @media (prefers-reduced-motion: reduce) {
   .beat-129,
-  .beat-129 > span,
-  .gallery-marquee-track {
+  .beat-129 > span {
     animation: none !important;
+  }
+
+  /* Half-speed gallery scroll under reduce-motion: still visible, still
+     useful, but slow enough not to register as motion-triggering. */
+  .gallery-marquee-track {
+    animation-duration: 180s !important;
   }
 }
