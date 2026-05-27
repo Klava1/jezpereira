@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-ink: oklch(0.18 0.01 250);
+  --color-ink-muted: oklch(0.46 0.01 250);
+  --color-canvas: oklch(0.99 0.005 95);
+  --color-canvas-elevated: oklch(0.97 0.008 95);
+  --color-accent: oklch(0.68 0.18 35);
+  --color-accent-soft: oklch(0.92 0.06 35);
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+    --background: var(--color-canvas);
+    --foreground: var(--color-ink);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: oklch(0.16 0.012 250);
+      --foreground: oklch(0.96 0.005 95);
+    }
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+}
+
+@layer utilities {
+  .prose-jez {
+    @apply max-w-prose text-base/7 text-[var(--foreground)];
+  }
+  .prose-jez h1 {
+    @apply mt-10 mb-4 text-3xl font-semibold tracking-tight;
+  }
+  .prose-jez h2 {
+    @apply mt-10 mb-3 text-2xl font-semibold tracking-tight;
+  }
+  .prose-jez h3 {
+    @apply mt-8 mb-2 text-xl font-semibold tracking-tight;
+  }
+  .prose-jez p {
+    @apply my-4;
+  }
+  .prose-jez a {
+    @apply text-[var(--color-accent)] underline underline-offset-4 decoration-[1.5px] hover:decoration-2;
+  }
+  .prose-jez ul {
+    @apply my-4 ml-6 list-disc;
+  }
+  .prose-jez ol {
+    @apply my-4 ml-6 list-decimal;
+  }
+  .prose-jez code:not(pre code) {
+    @apply rounded-md bg-black/5 px-1.5 py-0.5 text-[0.9em] font-mono dark:bg-white/10;
+  }
+  .prose-jez pre {
+    @apply my-6 overflow-x-auto rounded-xl border border-black/10 bg-[var(--color-canvas-elevated)] p-4 text-sm leading-6 dark:border-white/10 dark:bg-white/5;
+  }
+  .prose-jez blockquote {
+    @apply my-6 border-l-2 border-[var(--color-accent)] pl-4 italic text-[var(--color-ink-muted)];
+  }
+}

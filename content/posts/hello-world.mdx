@@ -1,0 +1,46 @@
+---
+title: "Hello, world"
+description: "A first post — and a quick tour of the stack powering this site."
+date: "2026-05-27"
+tags: ["meta", "next.js"]
+---
+
+Welcome. This is the first post on the new site. It exists mostly to prove
+that everything compiles, but it also serves as a brief introduction to the
+stack underneath.
+
+## The stack
+
+This site is intentionally small. The full ingredient list:
+
+- **Next.js 15** with the App Router
+- **React 19** and **TypeScript 5**
+- **Tailwind CSS 4** for styling
+- **MDX** for content, parsed at build time via `gray-matter` + `next-mdx-remote`
+- **Motion** (formerly Framer Motion) for the hero gradients and fades
+- **Vercel Analytics** and **Speed Insights** — privacy-friendly, no cookie banner
+- Deployed to **Vercel** on every push to `main`
+
+## Writing a new post
+
+Drop a new `.mdx` file in `content/posts/`. The frontmatter looks like this:
+
+```yaml
+---
+title: "A good title"
+description: "A one-line summary."
+date: "2026-05-27"
+tags: ["essays"]
+draft: false
+---
+```
+
+That's it. Routing, RSS-style metadata, sitemap entries, and reading time are
+derived automatically.
+
+## A note on tone
+
+The aim here is to write less, slower, and better. Quality over cadence.
+
+> "Perfection is achieved, not when there is nothing more to add, but when
+> there is nothing left to take away." — Antoine de Saint-Exupéry
