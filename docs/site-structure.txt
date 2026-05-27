@@ -1,0 +1,574 @@
+================================================================
+JEZ PEREIRA — Site Structure & Copy
+================================================================
+
+A complete map of every page, every section, and every line of
+visible copy on jezpereira.com (current build).
+
+Each section gives:
+  - The structural role (what it is / why it's there)
+  - The literal copy (verbatim — *italic* marks where the design
+    renders that word as pink-accent italic)
+  - Where it lives in the code, for editing
+
+
+================================================================
+ROUTE MAP
+================================================================
+
+  /                /app/page.tsx          Home
+  /story           /app/story/page.tsx    The Story  (3-part bio)
+  /music           /app/music/page.tsx    The Music  (releases)
+  /live            /app/live/page.tsx     Live       (gigs)
+  /family          /app/family/page.tsx   The Family (SYCK group)
+
+  Auxiliary:
+    /sitemap.xml   /app/sitemap.ts        auto-generated
+    /robots.txt    /app/robots.ts         auto-generated
+
+
+================================================================
+GLOBAL CHROME — appears on every page
+================================================================
+
+----------------------------------------------------------------
+NAV   (/components/Nav.tsx)  — fixed top, blurs on scroll
+----------------------------------------------------------------
+
+  Logo (links to /):
+      ▲ JEZ PEREIRA               (mono caps, 0.3em tracking)
+
+  Primary nav (desktop):
+      The Story       → /story
+      The Music       → /music
+      Live            → /live
+      The Family      → /family
+
+  Right-hand CTA (desktop):
+      Booking         → mailto:info@jezpereira.com
+
+  Mobile menu button labels:  Menu / Close
+
+----------------------------------------------------------------
+MUSIC PLAYER PILL   (/components/MusicPlayer.tsx)
+  Bottom-right corner. Only renders on routes with a registered
+  background video (currently: home page only).
+----------------------------------------------------------------
+
+  NOW SELECTING
+  I'm Free                (italic serif)
+                          → switches to "Muted" when muted
+  [slider]  [🔊 / 🔇]
+
+----------------------------------------------------------------
+FOOTER   (/components/Footer.tsx)
+----------------------------------------------------------------
+
+  Three columns:
+
+  Column 1 — BOOKING
+      info@jezpereira.com         (mailto)
+      +44 787 882 4441            (tel)
+
+  Column 2 — FIND
+      Instagram        → https://www.instagram.com/jezpereira/
+      SoundCloud       → https://soundcloud.com/jezpereira
+      Mixcloud         → https://www.mixcloud.com/jezpereira/
+      Spotify          → https://open.spotify.com/artist/4Yxvfc78HHLFFJRbRpjXM4
+      Resident Advisor → https://ra.co/dj/pereira
+
+  Column 3 — THE FAMILY
+      SYCK Talent      → https://sycktalent.com/
+      YU Artists       → https://yuartists.com/
+      Lost in Musyck   → https://lostinmusyck.com/
+      SYCK Records     → (no link — coming soon)
+
+  Tagline row (italic serif, centered):
+      Musyck is a feeling — and when you can feel it, you understand it better.
+
+  Copyright row (mono caps):
+      © Jez Pereira · Est. 1993 · All rights reserved
+
+
+================================================================
+PAGE 1 — HOME   ( / )
+================================================================
+
+----------------------------------------------------------------
+SECTION 1.1 — HERO   (/components/Hero.tsx)
+  Full-viewport. Background = looping Jez_draft_video.mp4
+  (darkened with filter + gradient overlay), slowly rotating
+  accent-pink triangle behind, soft accent halo behind the H1.
+----------------------------------------------------------------
+
+  Overline (top, mono caps, accent pink, with thin accent rules on each side at >=sm):
+      — Est. 1993 · London · Miami · Mumbai · Ibiza —
+
+  H1 (industrial display caps, +0.09em tracking, with stage-lamp halo):
+      JEZ PEREIRA
+
+      Animation choreography on the H1 letters (129 BPM = "Lost in Musyck" tempo):
+        idle    →  entrance fadeUp (parent), no per-letter motion
+        unison  →  every letter pulses together, +3 %        (2 bars)
+        wave    →  pulse cascades letter-by-letter           (2 bars)
+        bold    →  +7 % pulse with accent text-shadow glow   (4 bars / "the drop")
+        ↑ unison → wave → bold repeats THREE TIMES
+        fade    →  beat-by-beat decay 7 % → 2.2 %            (2 bars)
+        subtle  →  quarter-time resting heartbeat at 2.2 %   (infinite)
+
+  Scroll hint (bottom, mono caps, gentle bob):
+      SCROLL
+
+----------------------------------------------------------------
+SECTION 1.2 — CURRENTLY PLAYING  ( id="now" )
+  Bordered band. The "live now / next" beacon.
+----------------------------------------------------------------
+
+  Overline (mono caps):
+      Currently Playing
+
+  H2 (display serif, accent-italic mid-phrase):
+      Lost in Musyck *at KOKO*, London
+
+  Meta (mono caps):
+      2025 · Camden · A Lost in Musyck Production
+
+  CTA (mono caps, opens new tab):
+      Selected Shows         → /live  (target="_blank")
+
+----------------------------------------------------------------
+SECTION 1.3 — PHOTO GALLERY MARQUEE
+  (/components/GalleryMarquee.tsx)
+  Auto-scrolling photo strip — sits between Currently Playing
+  and the Three Doors. Renders any image in
+  public/images/gallery/. Suppresses itself entirely if folder
+  is empty. No captions — visuals only.
+----------------------------------------------------------------
+
+  [no copy — images only]
+
+----------------------------------------------------------------
+SECTION 1.4 — THE THREE DOORS   (/components/Door.tsx, x3)
+  Grid of three "doors" — one per non-home page.
+----------------------------------------------------------------
+
+  Door 1
+    Number:    01 — The Bio
+    Title:     The *Story*
+    Text:      From a kid in Orlem who couldn't afford a nightclub,
+               to the booths of London's most exclusive rooms.
+               Thirty-two years in three movements.
+    CTA:       Read →           → /story
+
+  Door 2
+    Number:    02 — Sound
+    Title:     The *Music*
+    Text:      Selected mixes, remixes for Frankie Knuckles and
+               Steve "Silk" Hurley, and a Common × Kanye West remix
+               that hits different.
+    CTA:       Listen →         → /music
+
+  Door 3
+    Number:    03 — The Group
+    Title:     The *Family*
+    Text:      SYCK Talent. YU Artists. Lost in Musyck. SYCK Records.
+               He built it so others could feel it too.
+    CTA:       Enter →          → /family
+
+
+================================================================
+PAGE 2 — THE STORY   ( /story )
+================================================================
+
+----------------------------------------------------------------
+PAGE HEADER   (/components/PageHeader.tsx)
+----------------------------------------------------------------
+
+  Overline:  The Story
+  H1:        Thirty-two years *in motion*.
+  Lede:      From Orlem, Mumbai, to the booths of London's most
+             exclusive rooms. A story told in three movements.
+
+----------------------------------------------------------------
+SECTION 2.1 — MOVEMENT ONE   (content/bio/01-beginning.mdx)
+----------------------------------------------------------------
+
+  Overline:  Movement One · 1993 — 2001
+  H2:        Bombay to London
+
+  Body:
+      Jez Pereira is a globally recognised DJ and producer originally
+      from Bombay, India, where his musical journey began in 1993 at
+      the city's legendary venues — including Piano Bar and China
+      Garden.
+
+      In 2001, he moved to London and immersed himself in the UK
+      underground dance scene, drawing inspiration from iconic clubs
+      such as KOKO and Ministry of Sound, where his distinctive
+      *freestyle* sound and musical identity evolved.
+
+----------------------------------------------------------------
+SECTION 2.2 — MOVEMENT TWO   (content/bio/02-world.mdx)
+----------------------------------------------------------------
+
+  Overline:  Movement Two · 2001 — 2015
+  H2:        The World
+
+  Body:
+      Over the years, Jez has shared stages with world-renowned
+      artists including Black Coffee, &ME, David Guetta and many more.
+
+      His global journey has taken him from Burning Man to Tao,
+      Las Vegas, from collaborations with PACHA Ibiza, PACHA Italy,
+      and Pacha Buzios, Brazil, to performances at Armani Privé Dubai
+      — alongside standalone events across New York, Colombia, and
+      for Redbull in Japan.
+
+      *All independently. Without the backing of a manager or agent.*
+
+----------------------------------------------------------------
+SECTION 2.3 — MOVEMENT THREE   (content/bio/03-founder.mdx)
+----------------------------------------------------------------
+
+  Overline:  Movement Three · 2015 — Now
+  H2:        The Founder
+
+  Body:
+      Beyond the decks, Jez co-founded the London-based DJ agency
+      *Syck Talent* in 2015, supplying DJs to prestigious clients
+      including Annabel's, KOKO, Gordon Ramsay Restaurants UK &
+      Miami, and other luxury venues worldwide.
+
+      He also created *LOST IN MUSYCK* — a platform dedicated to
+      showcasing emerging DJs — and is now launching *SYCK RECORDS*
+      — building a creative ecosystem designed to support, develop,
+      and empower the next generation of artists.
+
+      For Jez, music has always been about feeling, connection,
+      emotion, and creating unforgettable experiences — a philosophy
+      captured perfectly in his message:
+
+  Blockquote (large italic serif, accent left-border):
+      Let the MUSYCK do the talking.
+
+
+================================================================
+PAGE 3 — THE MUSIC   ( /music )
+================================================================
+
+----------------------------------------------------------------
+PAGE HEADER
+----------------------------------------------------------------
+
+  Overline:  The Music
+  H1:        Selected *works*.
+  Lede:      Remixes for the architects of house — Frankie Knuckles,
+             Steve "Silk" Hurley — and a Common × Kanye West rework on
+             S&S Records, Chicago.
+
+----------------------------------------------------------------
+SECTION 3.1 — REMIXES & RELEASES
+  Section heading: "Remixes & Releases"
+  Renders /components/ReleaseRow.tsx for each file in
+  content/releases/. Currently four.
+----------------------------------------------------------------
+
+  Release 1   (content/releases/2010-steve-silk-hurley-jack-your-body.mdx)
+    Year:    2010
+    Artist:  Steve "Silk" Hurley
+    Title:   Jack Your Body
+    Remix:   Jez Pereira Remix · Co-written with Elijah Collins
+    Label:   S&S Records
+
+  Release 2   (content/releases/2011-frankie-knuckles-baby-wants-to-ride.mdx)
+    Year:    2011
+    Artist:  Frankie Knuckles
+    Title:   Baby Wants to Ride
+    Remix:   Jez Pereira Remix
+    Label:   S&S Records
+
+  Release 3   (content/releases/2012-common-kanye-wouldnt-you-like-to-ride.mdx)
+    Year:    2012
+    Artist:  Common ft. Kanye West, Malik Yusef, JV
+    Title:   Wouldn't You Like to Ride
+    Remix:   Jez Pereira & Madoc Remix · S&S Remix Package
+    Label:   S&S Records
+
+  Release 4   (content/releases/2014-i-feel-love-remix.mdx)
+    Year:    2014
+    Title:   *I Feel Love* (Jez Pereira Remix)
+    Note:    Supported by Erick Morillo at Ministry of Sound, London
+    Label:   Independent
+
+----------------------------------------------------------------
+SECTION 3.2 — FIND THE REST
+  Section heading: "Find the rest"
+----------------------------------------------------------------
+
+  CTA pills (mono caps, accent underline):
+      SoundCloud   → https://soundcloud.com/jezpereira
+      Mixcloud     → https://www.mixcloud.com/jezpereira/
+      Spotify      → https://open.spotify.com/artist/4Yxvfc78HHLFFJRbRpjXM4
+      Beatport     → https://www.beatport.com/artist/jez-pereira/107581
+
+
+================================================================
+PAGE 4 — LIVE   ( /live )
+================================================================
+
+----------------------------------------------------------------
+PAGE HEADER
+----------------------------------------------------------------
+
+  Overline:  Live
+  H1:        Selected *shows*.
+  Lede:      A curated history of rooms. From a stage in the Nevada
+             desert with the creator of Tetris, to a yacht at the
+             Monaco Grand Prix, to a Lost in Musyck production at KOKO.
+
+----------------------------------------------------------------
+SECTION 4.1 — CURRENTLY ON THE CALENDAR
+  Only renders when at least one gig has `upcoming: true`.
+  Each row = /components/LiveRow.tsx
+----------------------------------------------------------------
+
+  Upcoming gig 1   (content/gigs/2025-koko-london.mdx)
+    Year:      2025
+    Venue:     *Lost in Musyck* · KOKO
+    Location:  London, UK
+    Flags:     upcoming: true, featured: true
+
+----------------------------------------------------------------
+SECTION 4.2 — SELECTED PAST PERFORMANCES
+  Each row = /components/LiveRow.tsx, sorted reverse-chronological.
+  Source: every other .mdx file in content/gigs/.
+----------------------------------------------------------------
+
+  Past gig    (content/gigs/2014-india-tour.mdx)
+    Year:      2014
+    Venue:     India Tour
+    Location:  Pune · Chennai · Mumbai · Bangalore
+
+  Past gig    (content/gigs/2014-ministry-of-sound.mdx)
+    Year:      2014
+    Venue:     The Gallery · Ministry of Sound
+    Location:  London, UK
+
+  Past gig    (content/gigs/2014-tao-las-vegas.mdx)
+    Year:      2014
+    Venue:     TAO Nightclub (with Erick Morillo)
+    Location:  Las Vegas, USA
+
+  Past gig    (content/gigs/2013-burning-man.mdx)
+    Year:      2013
+    Venue:     Burning Man · *Tetris Stage*
+    Location:  Nevada, USA
+
+  Past gig    (content/gigs/2013-monaco-grand-prix.mdx)
+    Year:      2013
+    Venue:     Indian Empress yacht · Monaco Grand Prix
+    Location:  Monaco
+
+  Past gig    (content/gigs/2013-pacha-buzios.mdx)
+    Year:      2013
+    Venue:     Pacha
+    Location:  Buzios, Brazil
+
+  Past gig    (content/gigs/2013-pacha-livorno-nye.mdx)
+    Year:      2013
+    Venue:     Pacha NYE · *Palalivorno*
+    Location:  Livorno, Italy
+
+  Past gig    (content/gigs/2013-the-end-bogota.mdx)
+    Year:      2013
+    Venue:     The End Club
+    Location:  Bogotá, Colombia
+
+  Past gig    (content/gigs/2012-armani-prive-dubai.mdx)
+    Year:      2012
+    Venue:     Armani Privé · *Fashion Overdose* (residency)
+    Location:  Dubai, UAE
+
+  Past gig    (content/gigs/2012-barbados-music-festival.mdx)
+    Year:      2012
+    Venue:     Barbados Music Festival (with Steve "Silk" Hurley, DJ Skip)
+    Location:  Barbados
+
+  Past gig    (content/gigs/2012-cannes-film-festival.mdx)
+    Year:      2012
+    Venue:     Fashion TV Anniversary · Cannes Film Festival
+    Location:  Cannes, France
+
+  Past gig    (content/gigs/2011-red-bull-launches.mdx)
+    Year:      2011
+    Venue:     Red Bull launch parties
+    Location:  Amsterdam · Tokyo
+
+  Past gig    (content/gigs/2010-bedrock-london.mdx)
+    Year:      2010
+    Venue:     Bedrock (opened for X-Press 2)
+    Location:  London, UK
+
+  Past gig    (content/gigs/2008-paul-van-dyk-launch.mdx)
+    Year:      2008
+    Venue:     Paul van Dyk · Album Launch
+    Location:  London, UK
+
+  Past gig    (content/gigs/1993-2000-mumbai-clubs.mdx)
+    Year:      1993-2000
+    Venue:     Illusion · Piano Bar · China Garden
+    Location:  Mumbai, India
+
+----------------------------------------------------------------
+SECTION 4.3 — BOOKINGS CARD
+  Bordered card at the bottom of /live.
+----------------------------------------------------------------
+
+  Overline:  Bookings
+  H3:        For shows, residencies, & brand work
+  Meta:      Booking handled directly · International enquiries welcome
+  CTA:       info@jezpereira.com         (mailto)
+
+
+================================================================
+PAGE 5 — THE FAMILY   ( /family )
+================================================================
+
+----------------------------------------------------------------
+PAGE HEADER
+----------------------------------------------------------------
+
+  Overline:  The Family
+  H1:        He built it so *others could feel it too*.
+  Lede:      In 2015, Jez Pereira and his co-founder Laura launched
+             SYCK Talent. It has since become four arms — an agency,
+             a management company, an event series, and a label.
+
+----------------------------------------------------------------
+SECTION 5.1 — INTRO PARAGRAPH
+  Italic serif lede above the card grid.
+----------------------------------------------------------------
+
+  SYCK works with brands like Flannels, Gucci and Vogue, and venues
+  across London, Paris and Miami. The mantra hasn't changed since the
+  first day: *it's about the You, not the I.*
+
+----------------------------------------------------------------
+SECTION 5.2 — THE FOUR ARMS  (/components/FamilyCard.tsx, x4)
+  2-column grid.
+----------------------------------------------------------------
+
+  Arm 1
+    Type:        Arm One · DJ Agency
+    Brand:       SYCK *Talent*
+    Description: A bespoke DJ agency operating across the UK, Paris,
+                 and Miami. Shaping the sound of brands and venues
+                 that take their music seriously.
+    Link:        sycktalent.com →    → https://sycktalent.com/
+
+  Arm 2
+    Type:        Arm Two · Management
+    Brand:       YU *Artists*
+    Description: An artist management company built to give hand-picked
+                 talent the platform, the patience, and the opportunities
+                 they need to grow into their art.
+    Link:        yuartists.com →     → https://yuartists.com/
+
+  Arm 3
+    Type:        Arm Three · Events
+    Brand:       Lost in *Musyck*
+    Description: A curated event series — a journey through the
+                 dimensions of sound. Recent productions include a Jez
+                 Pereira live show at KOKO, London (2025).
+    Link:        lostinmusyck.com →  → https://lostinmusyck.com/
+
+  Arm 4
+    Type:        Arm Four · Record Label
+    Brand:       SYCK *Records*
+    Description: The newest arm — a record label born from the same
+                 ethos. To give the artists in the family a home for
+                 the music they're making.
+    Link:        Coming soon         (no href)
+
+----------------------------------------------------------------
+SECTION 5.3 — CLOSING MANTRA
+  Centered italic serif, bordered top.
+----------------------------------------------------------------
+
+  It's about the *You*, not the *I*.
+
+
+================================================================
+SEO / METADATA  (browser tab titles & social previews)
+================================================================
+
+  /              Title:    Jez Pereira — DJ, Producer, Founder · Music is a feeling
+                 Desc:     Jez Pereira — DJ, producer, and founder of SYCK Talent.
+                           Thirty-two years from Mumbai to London, shaping the
+                           sound of the world's most exclusive rooms.
+
+  /story         Title:    The Story — Mumbai to London, thirty-two years in motion
+                 Desc:     Jez Pereira's story — from Orlem, Mumbai, to the booths
+                           of London's most exclusive rooms. The teenager who
+                           couldn't afford a nightclub became the DJ who shapes the
+                           world's most curated sound.
+
+  /music         Title:    The Music — Selected releases, remixes and mixes
+                 Desc:     Selected music by Jez Pereira — including S&S Records
+                           remixes of Frankie Knuckles' Baby Wants to Ride, Steve
+                           'Silk' Hurley's Jack Your Body, and Common ft. Kanye West.
+
+  /live          Title:    Live — Selected performances, 1993 to today
+                 Desc:     Selected live performances by Jez Pereira — including
+                           KOKO London (2025), Burning Man Tetris Stage (2013),
+                           Monaco Grand Prix, and a residency at Armani Privé Dubai.
+
+  /family        Title:    The Family — SYCK Talent, YU Artists, Lost in Musyck, SYCK Records
+                 Desc:     The SYCK Group — four arms shaping the sound of London,
+                           Paris and Miami. Co-founded by Jez Pereira in 2015.
+
+  Structured data (JSON-LD, /app/layout.tsx):
+      schema.org Person — Jez Pereira
+      Birth: Mumbai, India (Orlem)        Home: London, UK
+      Founder of: SYCK Talent
+      Knows about: House, deep house, tech house, afro house,
+                   DJ performance, music production
+
+
+================================================================
+EDITING GUIDE — where copy lives
+================================================================
+
+  GLOBAL CHROME
+    Nav links / labels ............ /components/Nav.tsx (LINKS array)
+    Footer columns ................ /components/Footer.tsx
+    Music player labels ........... /components/MusicPlayer.tsx (LABEL, TRACK)
+
+  HOME
+    Hero overline + title ......... /components/Hero.tsx
+    "Currently Playing" + doors ... /app/page.tsx
+
+  STORY
+    Page header copy .............. /app/story/page.tsx
+    Each movement (1 file each) ... /content/bio/0X-*.mdx
+
+  MUSIC
+    Page header copy .............. /app/music/page.tsx
+    Mix-platform links ............ /app/music/page.tsx (MIX_LINKS array)
+    Each release (1 file each) .... /content/releases/*.mdx
+
+  LIVE
+    Page header copy .............. /app/live/page.tsx
+    Bookings card ................. /app/live/page.tsx (bottom)
+    Each gig (1 file each) ........ /content/gigs/*.mdx
+        upcoming: true            → moves into the "Calendar" section
+        featured: true            → optional flag (for future styling)
+
+  FAMILY
+    Page header + intro + closing . /app/family/page.tsx
+    Each of the four arm cards .... /app/family/page.tsx
+
+  Conventions:
+    *single asterisks* in MDX render as accent-pink italic
+    Each gig / release / bio file's frontmatter (between the ---
+       lines) drives the rendered fields directly.
