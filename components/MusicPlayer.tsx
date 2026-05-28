@@ -17,13 +17,35 @@ export function MusicPlayer() {
   return (
     <aside
       aria-label="Background video volume"
-      className="fixed bottom-6 right-6 z-[100] flex items-center gap-3.5
-        bg-[rgba(10,10,11,0.85)] backdrop-blur-md border border-line
+      // Mobile: pinned to the bottom and horizontally centred — the pill is
+      //   the primary mute/unmute affordance for the hero video, and putting
+      //   it on the centre line makes it feel like a system-level toolbar
+      //   rather than a corner widget you have to thumb-stretch to reach.
+      // ≥sm: returns to the bottom-right corner, where it stays out of the
+      //   way of the desktop layout's centred content.
+      className="fixed z-[100] flex items-center gap-3.5
+        bottom-4 left-1/2 -translate-x-1/2
+        sm:bottom-6 sm:right-6 sm:left-auto sm:translate-x-0
+        bg-[rgba(10,10,11,0.92)] sm:bg-[rgba(10,10,11,0.85)] backdrop-blur-md
+        border border-line-strong sm:border-line
         rounded-full pl-3.5 pr-2.5 py-2.5 transition-colors
-        hover:border-line-strong"
+        hover:border-accent"
+      style={{
+        // Layered backlight glow — the "light behind" sits in the same
+        // accent hue as the hero's stage-lamp backlight, so the player pill
+        // reads as part of the same brand lighting rather than a floating
+        // utility chip. Three layers:
+        //   1. Tight accent halo  → makes the pill pop on busy backgrounds
+        //   2. Soft outer wash    → atmospheric bloom that's strongest on
+        //      dark sections (where mobile users usually land first)
+        //   3. Neutral drop       → actual elevation, decoupled from accent
+        //      so the pill still feels "lifted" against a light section.
+        boxShadow:
+          '0 0 26px rgba(215, 45, 88, 0.38), 0 0 64px rgba(215, 45, 88, 0.16), 0 8px 24px rgba(0, 0, 0, 0.55)',
+      }}
     >
       <div className="flex flex-col gap-0.5 overflow-hidden">
-        <span className="font-mono text-[0.8rem] tracking-[0.28em] uppercase text-ink-mute">
+        <span className="font-mono text-[0.8rem] tracking-[0.28em] uppercase text-ink-mute whitespace-nowrap">
           {LABEL}
         </span>
         <span className="font-serif italic text-[1.05rem] text-ink whitespace-nowrap">

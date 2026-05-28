@@ -53,6 +53,16 @@ export function Hero() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { registerVideo, muted } = useMedia();
   const [titlePhase, setTitlePhase] = useState<TitlePhase>('idle');
+  // Refs used by the auto-fit effect that guarantees "Jez Pereira" never wraps.
+  // titleFrameRef = the outer container that defines the available width.
+  // h1Ref         = the H1 we shrink to fit when the CSS-clamped size overflows.
+  const titleFrameRef = useRef<HTMLDivElement | null>(null);
+  const h1Ref = useRef<HTMLHeadingElement | null>(null);
+  // Same auto-fit pattern for the overline — but bi-directional: scales UP
+  // to fill the frame edge-to-edge AND scales DOWN if needed to stay on one
+  // line at any viewport.
+  const overlineFrameRef = useRef<HTMLDivElement | null>(null);
+  const overlineRef = useRef<HTMLParagraphElement | null>(null);
 
   // Register the <video> with the global MediaProvider so the persistent
   // MusicPlayer pill in the corner can drive its volume / mute state.
@@ -70,6 +80,69 @@ export function Hero() {
       setTimeout(() => setTitlePhase(phase), start),
     );
     return () => timeouts.forEach(clearTimeout);
+  }, []);
+
+  // Hard guarantee: "Jez Pereira" must NEVER break to a second line. The H1
+  // already has `white-space: nowrap`, so the spans can't wrap; but a wide
+  // fallback font (or anyone playing with letter-spacing) could still push
+  // the headline past the viewport. This effect measures the rendered width
+  // after every relevant change and, if it exceeds the frame, scales the
+  // font-size down until it fits — with a 1% safety margin for sub-pixel
+  // rounding and italic overhangs.
+  useEffect(() => {
+    const h1 = h1Ref.current;
+    const frame = titleFrameRef.current;
+    if (!h1 || !frame) return;
+
+    function fit() {
+      h1.style.fontSize = '';
+      const available = frame.clientWidth;
+      if (available <= 0) return;
+      const natural = h1.scrollWidth;
+      if (natural > available) {
+        const current = parseFloat(getComputedStyle(h1).fontSize);
+        h1.style.fontSize = `${current * (available / natural) * 0.99}px`;
+      }
+    }
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(frame);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(fit).catch(() => {});
+    }
+    return () => ro.disconnect();
+  }, []);
+
+  // Stretch-to-fill auto-fit for the overline (city list). Unlike the H1 —
+  // which is sized by a CSS clamp() and only shrinks if it overflows — this
+  // one always rescales the font-size so the entire row (rules + text + gaps)
+  // spans the frame's full width. All horizontal dimensions inside the <p>
+  // (rule widths, gaps, letter-spacing) are expressed in `em`, so the natural
+  // scrollWidth changes linearly with font-size and one ratio sets the whole
+  // line. Result: edge-to-edge on every viewport, never breaks to a new line.
+  useEffect(() => {
+    const p = overlineRef.current;
+    const frame = overlineFrameRef.current;
+    if (!p || !frame) return;
+
+    function fit() {
+      p.style.fontSize = '';
+      const available = frame.clientWidth;
+      if (available <= 0) return;
+      const natural = p.scrollWidth;
+      if (natural <= 0) return;
+      const current = parseFloat(getComputedStyle(p).fontSize);
+      p.style.fontSize = `${current * (available / natural) * 0.99}px`;
+    }
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(frame);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(fit).catch(() => {});
+    }
+    return () => ro.disconnect();
   }, []);
 
   return (
@@ -155,28 +228,49 @@ export function Hero() {
       </svg>
 
       {/* Overline — pinned to the top of the hero, above the centered title.
-          Font-size + tracking scale fluidly via clamp() so the full city list
-          stays on one line from ~320px up. Accent rules drop on narrow screens
-          where every pixel matters. */}
-      <div className="absolute top-24 sm:top-32 left-1/2 -translate-x-1/2 z-10">
+          The full city list "Est. 1993 · London · Miami · Mumbai · Ibiza" is
+          43 characters wide.
+
+          The outer frame spans the full hero width (inset-x-0) with just a
+          small px-* gutter so the overline stretches edge-to-edge. The JS
+          auto-fit effect above rescales the font-size on every resize so the
+          whole row exactly fills that frame on one line — bigger on wide
+          viewports, smaller on narrow ones, but always one line, always
+          stretched.
+
+          Every horizontal dimension inside the <p> (rule widths, flex gap,
+          letter-spacing) is expressed in em, so all of them rescale linearly
+          with the JS-set font-size and the fit math stays correct. */}
+      <div
+        ref={overlineFrameRef}
+        className="absolute top-20 sm:top-28 inset-x-0 z-10 px-2 sm:px-3"
+      >
         <p
-          className="font-mono uppercase text-accent flex items-center justify-center gap-2 sm:gap-4 whitespace-nowrap"
-          style={{
-            fontSize: 'clamp(0.45rem, 2.1vw, 0.9rem)',
-            letterSpacing: 'clamp(0.1em, 0.65vw, 0.32em)',
-            animation: 'fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
+          ref={overlineRef}
+          // The numbers below set the *natural* row width at the base
+          // font-size; smaller natural → auto-fit scales the font UP further
+          // to fill the frame. Trimmed deliberately so the overline reads big
+          // on wide screens while still fitting on phones in one line:
+          //   - tracking 0.05em (sm+): keeps the decorative airy feel, but
+          //     drops ~14% width vs the previous 0.2em.
+          //   - rule width 2em + gap 0.5em (sm+): keeps the side bars visible
+          //     without dominating the row.
+          className="font-mono uppercase text-accent flex items-center justify-center
+            gap-[0.4em] sm:gap-[0.5em] whitespace-nowrap
+            tracking-normal sm:tracking-wider
+            text-[0.7rem]"
+          style={{ animation: 'fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           <span
             aria-hidden
-            className="hidden sm:block h-px bg-accent opacity-60"
-            style={{ width: 'clamp(1.5rem, 4vw, 2.5rem)' }}
+            className="hidden sm:block h-px bg-accent opacity-60 shrink-0"
+            style={{ width: '2em' }}
           />
           Est. 1993 &middot; London &middot; Miami &middot; Mumbai &middot; Ibiza
           <span
             aria-hidden
-            className="hidden sm:block h-px bg-accent opacity-60"
-            style={{ width: 'clamp(1.5rem, 4vw, 2.5rem)' }}
+            className="hidden sm:block h-px bg-accent opacity-60 shrink-0"
+            style={{ width: '2em' }}
           />
         </p>
       </div>
@@ -189,7 +283,8 @@ export function Hero() {
           Letters are split into spans so each one can carry its own
           phase-shifted animation while the whole word stays one piece. */}
       <div
-        className="relative z-10 max-w-[920px]"
+        ref={titleFrameRef}
+        className="relative z-10 w-full max-w-[920px]"
         style={{ animation: 'fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
       >
         {/* Inline-block wrapper sized to the H1's own width, with `isolate`
@@ -210,9 +305,19 @@ export function Hero() {
               filter: 'blur(28px)',
             }}
           />
+          {/* H1 sizing: a CSS clamp() picks the "ideal" size based on viewport,
+              but two safety nets ensure the headline NEVER wraps:
+                1. `whitespace-nowrap` makes the spans behave as a single line,
+                   so even an oversized font overflows horizontally instead of
+                   breaking to a new row.
+                2. The auto-fit effect above measures `scrollWidth` against the
+                   frame and scales font-size down if it exceeds. This guards
+                   against wide fallback fonts, browser font substitution,
+                   stray letter-spacing, etc. */}
           <h1
+            ref={h1Ref}
             aria-label={TITLE}
-            className="beat-129 font-display font-extrabold uppercase tracking-[0.09em] leading-[0.95] text-ink text-[clamp(3.6rem,9.6vw,7.8rem)]"
+            className="beat-129 font-display font-bold uppercase whitespace-nowrap tracking-[0.04em] leading-[0.95] text-ink text-[clamp(3.5rem,16vw,7.8rem)]"
           >
           {LETTERS.map((char, i) => {
             const isSpace = char === ' ';

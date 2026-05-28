@@ -19,12 +19,18 @@
   --color-line-strong: rgba(241, 236, 226, 0.18);
 
   /* Typography */
-  --font-serif: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-  /* Display = big chiseled headlines (Hero H1, marquees). Big Shoulders is a
-     condensed industrial sans built off Chicago signage — feels like a club
-     poster or sleeve, not a serif and not a utility mono. */
-  --font-display: 'Big Shoulders Display', 'Oswald', 'Arial Narrow', system-ui, sans-serif;
+  /* Font stacks. The leading `var(--font-…)` references are populated by
+     next/font/google in app/layout.tsx (self-hosted woff2 with `display: swap`).
+     The literal fallbacks after are used pre-swap and on environments where the
+     web font fails to load — chosen to be metric-similar so the layout doesn't
+     reflow drastically when the swap happens. */
+  --font-serif: var(--font-serif-loaded), 'Fraunces', 'Cormorant Garamond', Georgia, serif;
+  --font-mono: var(--font-mono-loaded), 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  /* Display = big chiseled headlines (Hero H1, marquees). Oswald is a tall,
+     condensed industrial sans (~0.4em per uppercase glyph) — narrow enough
+     that "JEZ PEREIRA" fits on a single line at mobile widths while still
+     feeling like a club poster, not a serif and not a utility mono. */
+  --font-display: var(--font-display-loaded), 'Oswald', 'Big Shoulders Display', 'Arial Narrow', 'Impact', system-ui, sans-serif;
 
   /* Layout */
   --container-wide: 1280px;
