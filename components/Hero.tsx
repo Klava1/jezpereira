@@ -94,7 +94,7 @@ export function Hero() {
     const frame = titleFrameRef.current;
     if (!h1 || !frame) return;
 
-    function fit() {
+    const fit = () => {
       h1.style.fontSize = '';
       const available = frame.clientWidth;
       if (available <= 0) return;
@@ -103,7 +103,7 @@ export function Hero() {
         const current = parseFloat(getComputedStyle(h1).fontSize);
         h1.style.fontSize = `${current * (available / natural) * 0.99}px`;
       }
-    }
+    };
 
     fit();
     const ro = new ResizeObserver(fit);
@@ -126,7 +126,7 @@ export function Hero() {
     const frame = overlineFrameRef.current;
     if (!p || !frame) return;
 
-    function fit() {
+    const fit = () => {
       p.style.fontSize = '';
       const available = frame.clientWidth;
       if (available <= 0) return;
@@ -134,7 +134,7 @@ export function Hero() {
       if (natural <= 0) return;
       const current = parseFloat(getComputedStyle(p).fontSize);
       p.style.fontSize = `${current * (available / natural) * 0.99}px`;
-    }
+    };
 
     fit();
     const ro = new ResizeObserver(fit);
