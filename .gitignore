@@ -9,3 +9,7 @@ next-env.d.ts
 .DS_Store
 .idea
 .vscode
+
+# Local-only backups of high-res image source files. Kept out of the repo
+# so the deployed bundle stays small; restore from your own copy if needed.
+.image-originals/
